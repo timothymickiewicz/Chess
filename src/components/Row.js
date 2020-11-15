@@ -1,12 +1,6 @@
 import React from 'react';
 
-import Square from './Square';
-
 function Row(props) {
-
-    React.useEffect(() => {
-        console.log(props.squares.length)
-    })
 
   return (
     <div className={`row${props.rowNum}`}>

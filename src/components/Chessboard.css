@@ -1,17 +1,45 @@
 .chessboard {
     background-color: grey;
     margin: 10vh 10% 10vh 10%;
-    width: 80%;
-    height: 80vh;
+    width: 80vmin;
+    height: 80vmin;
 }
 
 .icon {
     display: inline-block;
-    font-size: 8vmax;
+    font-size: 8vmin;
     line-height: 100%;
     height: 100%;
     width: 100%;
+    z-index: 2;
 }
+
+.outline {
+    display: inline-block;
+    line-height: 100%;
+    height: 100%;
+    width: 100%;
+    border: solid red 2px;
+    position: relative;
+}
+
+.shadow {
+    font-size: 10vmin;
+    margin: auto;
+    position: absolute;
+    top: 0; left: 0; bottom: 0; right: 0;
+    line-height: 100%;
+    height: 125%;
+    z-index: 1;
+    color: red;
+    opacity: 25%;
+}
+
+/* May work for icon color change */
+
+/* .icon:hover {
+    color: red;
+} */
 
 .row0, .row1, .row2, .row3, .row4, .row5, .row6, .row7 {
     width: 100%;
