@@ -3,7 +3,10 @@ import React from 'react';
 function King(props) {
 
     const setAsActivePiece = (name) => {
+      if (props.activePiece !== name) {
         props.handleSetActivePiece(name);
+        props.handleClearNewCoords();
+      }
     }
 
   return (

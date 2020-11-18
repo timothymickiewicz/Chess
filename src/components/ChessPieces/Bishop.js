@@ -4,11 +4,13 @@ import $ from 'jquery';
 function Bishop(props) {
 
     React.useEffect(() => {
-        console.log(props.selectedPiece)
     }, [props.selectedPiece, props.name])
 
     const setAsActivePiece = (name) => {
+      if (props.activePiece !== name) {
         props.handleSetActivePiece(name);
+        props.handleClearNewCoords();
+      }
     }
 
   return (

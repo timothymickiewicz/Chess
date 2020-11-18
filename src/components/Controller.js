@@ -4,7 +4,7 @@ import React from 'react';
 function Controller(props) {
 
     React.useEffect(() => {
-        console.log(props.piece)
+        // console.log(props.piece)
     })
 
     const handleClick = () => {
