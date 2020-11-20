@@ -9,7 +9,7 @@ import Controller from './Controller';
 import Row from './Row';
 import Square from './Square';
 import Outline from './Outline';
-import PossibleMoves from './PossibleMoves';
+import PossibleMove from './PossibleMove';
 import Pawn from './ChessPieces/Pawn';
 import Rook from './ChessPieces/Rook';
 import Knight from './ChessPieces/Knight';
@@ -21,6 +21,9 @@ function Chessboard() {
     const [activePiece, setActivePiece] = React.useState('');
     const [clickedCoordinates, setClickedCoordinates] = React.useState([]);
     const [newCoords, setNewCoords] = React.useState([]);
+    const [secondClick, setSecondClick] = React.useState(false);
+    const [toggleTurn, setToggleTurn] = React.useState('W');
+    const [enemiesInRange, setEnemiesInRange] = React.useState([])
 
     const handleSetActivePiece = (pieceName) => {
         setActivePiece(pieceName);
@@ -28,6 +31,10 @@ function Chessboard() {
 
     const handleClearNewCoords = () => {
         setNewCoords([]);
+    }
+
+    const handleToggleTurn = () => {
+        setToggleTurn("W" ? "B" : "W")
     }
 
     // props handle setting the active unit, clearing the possible moves so that the new unit can render its own possible moves, and the code necessary to render the correct units as well as a unique identifier name
@@ -226,6 +233,28 @@ function Chessboard() {
         },
     ]);
 
+    const detectEnemies = (team) => {
+        console.log('running detection')
+            for (let i=0;i<newCoords.length;i++) {
+                for (let j=0;j<piecePositions.length;j++) {
+                    if (newCoords[i].x === piecePositions[j].position[0] && newCoords[i].y === piecePositions[j].position[1] && team !== piecePositions[j].name.slice(0, 1)) {
+                        setEnemiesInRange(enemiesInRange => [...enemiesInRange, {x: piecePositions[j].position[0], y: piecePositions[j].position[1]}])
+                        console.log(enemiesInRange)
+                    }
+                }
+            }
+    }
+
+    const findPieceName = (coords) => {
+        console.log(coords)
+        for (let i=0;i<piecePositions.length;i++) {
+            if (piecePositions[i].position === coords) {
+                console.log('found')
+                return piecePositions[i].name
+            }
+        }
+    }
+
     const renderChessboard = () => {
         let rows = [];
         // Assembles 8 rows on board
@@ -233,11 +262,18 @@ function Chessboard() {
             let squares = [];
             // Assembles the 8 squares that go into each row
             for (let j=0;j<8;j++) {
-                let usedCol = null;
+                let enemies = enemiesInRange;
                 // Determines if square should be empty or have a chess piece
                 for (let k=0;k<piecePositions.length;k++) {
-                    if (piecePositions[k].position[0] === i && piecePositions[k].position[1] === j) {
-                        usedCol = j;
+                    if (enemies.join().trim() !== '') {
+                        for (let g=0;g<enemies.length;g++) {
+                            if (enemies[g].x === piecePositions[k].position[0] && enemies[g].y === piecePositions[k].position[1] && !squares[j]) {
+                                squares.push(<Square possibleMove={<PossibleMove piece={piecePositions[k].piece} code={piecePositions[k].code} />} colNum={j} key={j}></Square>)
+                                enemies.splice(g, 1);
+                            }
+                        }
+                    }
+                    if (piecePositions[k].position[0] === i && piecePositions[k].position[1] === j && !squares[j]) {
                         // Creates shadow/outline for selected pieces
                         if (piecePositions[k].position[0] === clickedCoordinates[0] && piecePositions[k].position[1] === clickedCoordinates[1]) {
                             squares.push(<Square outline={<Outline code={piecePositions[k].code} piece={piecePositions[k].piece} />} colNum={j} key={j}></Square>)
@@ -247,88 +283,108 @@ function Chessboard() {
                         }
                     }
                 }
-                if (usedCol !== j) {
+                newCoords.forEach((coord, index) => {
+                    if (coord.x === i && coord.y === j && !squares[j]) {
+                        squares.push(<Square possibleMove={<PossibleMove />} colNum={j} key={j}></Square>)
+                    }
+                })
+                if (!squares[j]) {
                     squares.push(<Square colNum={j} key={j}></Square>)
                 }
             }
-        rows.push(<Row rowNum={i} squares={squares} key={i}></Row>)
+            rows.push(<Row rowNum={i} squares={squares} key={i}></Row>)
         }
         return rows
     }
 
-    React.useEffect(() => {
-    }, [piecePositions, activePiece])
+    React.useEffect(() => { 
+    }, [activePiece, clickedCoordinates, newCoords])
 
-    const handleMove = () => {
+    const handleMove = (x, y) => {
         let piecePositionsArray = piecePositions;
-        for (let i=0;i<piecePositions.length;i++) {
+        let active = '';
+        newCoords.forEach((newCoord) => {
             // finds out if piece will kill another piece, sets new coordinates for piece
-
             // find out if activePiece(0, 1) is another of the current player's piece, return if true
             // Might get handled in another piece of logic though
-            if (newCoords === piecePositions[i].position && activePiece !== piecePositions[i].name) {
-                console.log('running slice')
-                piecePositionsArray.splice(i, 1);
-                setPiecePositions(piecePositionsArray);
+            for (let i=0;i<piecePositions.length;i++) {
+                if (piecePositions[i].name === activePiece && x === newCoord.x && y === newCoord.y) {
+                    active = piecePositions[i]
+                    piecePositionsArray[i].position[0] = x;
+                    piecePositionsArray[i].position[1] = y;
+                    setPiecePositions(piecePositionsArray);
+                    setActivePiece('')
+                    setNewCoords([]);
+                    setClickedCoordinates([]);
+                }
             }
-            if (piecePositions[i].name === activePiece) {
-                console.log('running new coords')
-                piecePositionsArray[i].position = newCoords;
-                setPiecePositions(piecePositionsArray);
+            for (let i=0;i<piecePositions.length;i++) {
+                if (newCoord.x === piecePositions[i].position[0] && newCoord.y === piecePositions[i].position[1] && activePiece !== piecePositions[i].name) {
+                    console.log('running splice')
+                    piecePositionsArray.splice(i, 1, active);
+                    setPiecePositions(piecePositionsArray);
+                }
             }
-        }
+        })
+        setSecondClick(false)
     }
 
-    const findPieceName = (coords) => {
-        for (let i=0;i<piecePositions.length;i++) {
-            console.log(coords, piecePositions[i].position)
-            if (piecePositions[i].position === coords) {
-                console.log('found')
-                return piecePositions[i].name
-            }
-        }
-    }
-
+    // combine into a setting active piece function
     const handleWhichPieceToMove = () => {
-        if (newCoords.join().trim() === '') {
-            switch(activePiece.slice(1, 2)) {
-                case 'P':
-                    // DetectEnemies(activePiece.slice(0, 2), )
-                    let getCoords = MovePawn(activePiece.slice(0, 1), clickedCoordinates);
-                    console.log(getCoords)
-                    setNewCoords(getCoords);
-                    break;
-                case 'R':
-                    MoveRook(activePiece.slice(0, 1), clickedCoordinates);
-                    break;
-                case 'N':
-                    MoveKnight(activePiece.slice(0, 1), clickedCoordinates);
-                    break;
-                case 'B':
-                    MoveBishop(activePiece.slice(0, 1), clickedCoordinates);
-                    break;
-                case 'Q':
-                    MoveQueen(activePiece.slice(0, 1), clickedCoordinates);
-                    break;
-                case 'K':
-                    MoveKing(activePiece.slice(0, 1), clickedCoordinates);
-                    break;
-                default:
-                    break;
-            }   
-        }
+        // switches on unit type
+        switch(activePiece.slice(1, 2)) {
+            case 'P':
+                // gets possible movement coordinates as an array of objects ex: [{x: num, y: num}]
+                let getCoords = MovePawn(activePiece.slice(0, 1), clickedCoordinates);
+                setNewCoords(getCoords); 
+                break;
+            case 'R':
+                MoveRook(activePiece.slice(0, 1), clickedCoordinates);
+                break;
+            case 'N':
+                MoveKnight(activePiece.slice(0, 1), clickedCoordinates);
+                break;
+            case 'B':
+                MoveBishop(activePiece.slice(0, 1), clickedCoordinates);
+                break;
+            case 'Q':
+                MoveQueen(activePiece.slice(0, 1), clickedCoordinates);
+                break;
+            case 'K':
+                MoveKing(activePiece.slice(0, 1), clickedCoordinates);
+                break;
+            default:
+                break;
+        }   
     }
 
     const handleClick = (x, y) => {
-        if (isNaN(Number(x)) || isNaN(Number(y))) {
+        // if is second click, move unit
+        // if is not a number for x,y (ie empty square lacking required div), clear coords and active piece
+        // if is a num for x,y then set clicked coords and ready the second click
+        if (secondClick) {
+            if (isNaN(Number(x)) || isNaN(Number(y))) {
+                console.log('is nan')
+                // setClickedCoordinates([])
+                setActivePiece('')
+                setNewCoords([]);
+                setSecondClick(false)
+            }
+            else {
+                console.log('is second click')
+                handleMove(parseInt(x), parseInt(y));
+            }
+        }
+        else if (isNaN(Number(x)) || isNaN(Number(y))) {
+            console.log('is nan')
             setClickedCoordinates([])
             setActivePiece('')
-            // setPieceSelected(false)
+            setNewCoords([]);
         }
-        else {
+        else if (!isNaN(Number(x)) && !isNaN(Number(y))) {
+            detectEnemies(toggleTurn) 
             setClickedCoordinates([parseInt(x), parseInt(y)])
-            // setPieceSelected(true)
-            // handleWhichPieceToMove(findPieceName([parseInt(x), parseInt(y)]));
+            setSecondClick(true)
         }
     }
 
@@ -342,9 +398,10 @@ function Chessboard() {
 
     return (
         <div className="chessboard" onClick={(e) => {
+            // gets coordinates for click based on rowNum and colNum that it finds on the click event
             handleClick($(e.target).parent().parent().attr('class').slice(3), $(e.target).parent().attr('class').slice(3));
         }}>
-            {activePiece ? handleWhichPieceToMove() : null}
+            {newCoords.join().trim() === '' ? handleWhichPieceToMove() : null}
             {renderChessboard()}
             <Controller piece={activePiece}/>
         </div>

@@ -3,7 +3,11 @@ import React from 'react';
 function Square(props) {
 
   return (
-    props.outline ? 
+    props.possibleMove ?
+        <div className={`col${props.colNum}`}>
+            {props.possibleMove}
+        </div>
+    : props.outline ? 
         <div className={`col${props.colNum}`}>
             {props.outline}
         </div>
@@ -11,7 +15,7 @@ function Square(props) {
         <div className={`col${props.colNum}`}>
             {props.piece}
         </div>
-  );
+  )
 }
 
 export default Square;

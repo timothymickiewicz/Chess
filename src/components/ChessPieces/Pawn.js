@@ -10,7 +10,7 @@ function Pawn(props) {
     }
 
   return (
-    <div data-attr='wat' className="icon" onClick={(e) =>{
+    <div className="icon" onClick={(e) =>{
         setAsActivePiece(props.name)
     }}>
       {props.code}

@@ -35,6 +35,24 @@
     opacity: 25%;
 }
 
+.empty {
+    display: inline-block;
+    line-height: 100%;
+    height: 100%;
+    width: 100%;
+    border: solid green 2px;
+    position: relative;
+}
+
+.enemyOccupied {
+    display: inline-block;
+    line-height: 100%;
+    height: 100%;
+    width: 100%;
+    border: solid green 2px;
+    position: relative;
+}
+
 /* May work for icon color change */
 
 /* .icon:hover {
