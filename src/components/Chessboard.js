@@ -23,7 +23,6 @@ function Chessboard() {
     const [newCoords, setNewCoords] = React.useState([]);
     const [secondClick, setSecondClick] = React.useState(false);
     const [toggleTurn, setToggleTurn] = React.useState('W');
-    const [enemiesInRange, setEnemiesInRange] = React.useState([])
 
     const handleSetActivePiece = (pieceName) => {
         setActivePiece(pieceName);
@@ -233,18 +232,6 @@ function Chessboard() {
         },
     ]);
 
-    const detectEnemies = (team) => {
-        console.log('running detection')
-            for (let i=0;i<newCoords.length;i++) {
-                for (let j=0;j<piecePositions.length;j++) {
-                    if (newCoords[i].x === piecePositions[j].position[0] && newCoords[i].y === piecePositions[j].position[1] && team !== piecePositions[j].name.slice(0, 1)) {
-                        setEnemiesInRange(enemiesInRange => [...enemiesInRange, {x: piecePositions[j].position[0], y: piecePositions[j].position[1]}])
-                        console.log(enemiesInRange)
-                    }
-                }
-            }
-    }
-
     const findPieceName = (coords) => {
         console.log(coords)
         for (let i=0;i<piecePositions.length;i++) {
@@ -257,24 +244,32 @@ function Chessboard() {
 
     const renderChessboard = () => {
         let rows = [];
+        let enemies = [];
+        // Detect enemies of selected piece based off of the potential new coordinates
+        for (let i=0;i<newCoords.length;i++) {
+            for (let j=0;j<piecePositions.length;j++) {
+                if (newCoords[i].x === piecePositions[j].position[0] && newCoords[i].y === piecePositions[j].position[1] && toggleTurn !== piecePositions[j].name.slice(0, 1)) {
+                    enemies.push({x: piecePositions[j].position[0], y: piecePositions[j].position[1]})
+                }
+            }
+        }
         // Assembles 8 rows on board
         for (let i=0;i<8;i++) {
             let squares = [];
             // Assembles the 8 squares that go into each row
             for (let j=0;j<8;j++) {
-                let enemies = enemiesInRange;
-                // Determines if square should be empty or have a chess piece
+                // Places a highlighted enemy unit 
                 for (let k=0;k<piecePositions.length;k++) {
                     if (enemies.join().trim() !== '') {
                         for (let g=0;g<enemies.length;g++) {
-                            if (enemies[g].x === piecePositions[k].position[0] && enemies[g].y === piecePositions[k].position[1] && !squares[j]) {
+                            if (enemies[g].x === i && enemies[g].x === piecePositions[k].position[0] && enemies[g].y === j && enemies[g].y === piecePositions[k].position[1] && !squares[j]) {
                                 squares.push(<Square possibleMove={<PossibleMove piece={piecePositions[k].piece} code={piecePositions[k].code} />} colNum={j} key={j}></Square>)
                                 enemies.splice(g, 1);
                             }
                         }
                     }
+                    // Places outline around selected unit
                     if (piecePositions[k].position[0] === i && piecePositions[k].position[1] === j && !squares[j]) {
-                        // Creates shadow/outline for selected pieces
                         if (piecePositions[k].position[0] === clickedCoordinates[0] && piecePositions[k].position[1] === clickedCoordinates[1]) {
                             squares.push(<Square outline={<Outline code={piecePositions[k].code} piece={piecePositions[k].piece} />} colNum={j} key={j}></Square>)
                         }
@@ -283,11 +278,13 @@ function Chessboard() {
                         }
                     }
                 }
+                // Places outlines for potential movements of selected unit
                 newCoords.forEach((coord, index) => {
                     if (coord.x === i && coord.y === j && !squares[j]) {
                         squares.push(<Square possibleMove={<PossibleMove />} colNum={j} key={j}></Square>)
                     }
                 })
+                // If nothing else applies, place an empty square
                 if (!squares[j]) {
                     squares.push(<Square colNum={j} key={j}></Square>)
                 }
@@ -382,7 +379,6 @@ function Chessboard() {
             setNewCoords([]);
         }
         else if (!isNaN(Number(x)) && !isNaN(Number(y))) {
-            detectEnemies(toggleTurn) 
             setClickedCoordinates([parseInt(x), parseInt(y)])
             setSecondClick(true)
         }
@@ -399,7 +395,12 @@ function Chessboard() {
     return (
         <div className="chessboard" onClick={(e) => {
             // gets coordinates for click based on rowNum and colNum that it finds on the click event
-            handleClick($(e.target).parent().parent().attr('class').slice(3), $(e.target).parent().attr('class').slice(3));
+            if ($(e.target).parent().attr('class') === 'enemyOccupied') {
+                handleClick($(e.target).parent().parent().parent().attr('class').slice(3), $(e.target).parent().parent().attr('class').slice(3));
+            } 
+            else {
+                handleClick($(e.target).parent().parent().attr('class').slice(3), $(e.target).parent().attr('class').slice(3));
+            }
         }}>
             {newCoords.join().trim() === '' ? handleWhichPieceToMove() : null}
             {renderChessboard()}
